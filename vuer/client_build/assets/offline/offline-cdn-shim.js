@@ -35,6 +35,14 @@
       local: '/assets/vendor/@webxr-input-profiles/assets/dist/profiles/meta-quest-touch-plus/profile.json'
     },
     {
+      match: /https:\/\/cdn\.jsdelivr\.net\/npm\/@webxr-input-profiles\/assets@[^/]+\/dist\/profiles\/meta-quest-touch-plus\/right\.glb/i,
+      local: '/assets/vendor/@webxr-input-profiles/assets/dist/profiles/meta-quest-touch-plus/right.glb'
+    },
+    {
+      match: /https:\/\/cdn\.jsdelivr\.net\/npm\/@webxr-input-profiles\/assets@[^/]+\/dist\/profiles\/meta-quest-touch-plus\/left\.glb/i,
+      local: '/assets/vendor/@webxr-input-profiles/assets/dist/profiles/meta-quest-touch-plus/left.glb'
+    },
+    {
       match: /https:\/\/cdn\.jsdelivr\.net\/npm\/@webxr-input-profiles\/assets@[^/]+\/dist\/profiles\/generic-hand\/right\.glb/i,
       local: '/assets/vendor/@webxr-input-profiles/assets/dist/profiles/generic-hand/right.glb'
     },
