@@ -2,11 +2,9 @@
   // Configure mappings from CDN URLs to local files you host alongside the client.
   // Place files under /assets/vendor/ matching the expected paths below.
   var DEFAULT_CONFIG = {
-    // Resolve vendored assets locally before making any external request.
-    preferLocalFirst: true,
-    // Robot deployments must not wait for an unreachable CDN. Developers can
-    // explicitly opt in with window.__OFFLINE_CDN_SHIM__ when desired.
-    allowNetworkFallback: false
+    // When true, attempt local mapped asset first, then fall back to original URL
+    // if the local request fails. This is the default behavior.
+    preferLocalFirst: true
   };
 
   function getConfig() {
@@ -18,7 +16,6 @@
         if (stored === 'false') cfg.preferLocalFirst = false;
       }
       if (typeof cfg.preferLocalFirst !== 'boolean') cfg.preferLocalFirst = DEFAULT_CONFIG.preferLocalFirst;
-      if (typeof cfg.allowNetworkFallback !== 'boolean') cfg.allowNetworkFallback = DEFAULT_CONFIG.allowNetworkFallback;
       return cfg;
     } catch (_) {
       return DEFAULT_CONFIG;
@@ -29,19 +26,33 @@
       match: /https:\/\/cdn\.jsdelivr\.net\/npm\/@vuer-ai\/mujoco-ts@[^/]+\/dist\/index\.umd\.js/i,
       local: '/assets/vendor/@vuer-ai/mujoco-ts/dist/index.umd.js'
     },
+    {
+      match: /https:\/\/cdn\.jsdelivr\.net\/npm\/@webxr-input-profiles\/assets@[^/]+\/dist\/profiles\/profilesList\.json/i,
+      local: '/assets/vendor/@webxr-input-profiles/assets/dist/profiles/profilesList.json'
+    },
+    {
+      match: /https:\/\/cdn\.jsdelivr\.net\/npm\/@webxr-input-profiles\/assets@[^/]+\/dist\/profiles\/meta-quest-touch-plus\/profile\.json/i,
+      local: '/assets/vendor/@webxr-input-profiles/assets/dist/profiles/meta-quest-touch-plus/profile.json'
+    },
+    {
+      match: /https:\/\/cdn\.jsdelivr\.net\/npm\/@webxr-input-profiles\/assets@[^/]+\/dist\/profiles\/meta-quest-touch-plus\/right\.glb/i,
+      local: '/assets/vendor/@webxr-input-profiles/assets/dist/profiles/meta-quest-touch-plus/right.glb'
+    },
+    {
+      match: /https:\/\/cdn\.jsdelivr\.net\/npm\/@webxr-input-profiles\/assets@[^/]+\/dist\/profiles\/meta-quest-touch-plus\/left\.glb/i,
+      local: '/assets/vendor/@webxr-input-profiles/assets/dist/profiles/meta-quest-touch-plus/left.glb'
+    },
+    {
+      match: /https:\/\/cdn\.jsdelivr\.net\/npm\/@webxr-input-profiles\/assets@[^/]+\/dist\/profiles\/generic-hand\/right\.glb/i,
+      local: '/assets/vendor/@webxr-input-profiles/assets/dist/profiles/generic-hand/right.glb'
+    },
+    {
+      match: /https:\/\/cdn\.jsdelivr\.net\/npm\/@webxr-input-profiles\/assets@[^/]+\/dist\/profiles\/generic-hand\/left\.glb/i,
+      local: '/assets/vendor/@webxr-input-profiles/assets/dist/profiles/generic-hand/left.glb'
+    }
   ];
 
-  var WEBXR_PROFILE_PREFIX =
-    /^https:\/\/cdn\.jsdelivr\.net\/npm\/@webxr-input-profiles\/assets@[^/]+\/dist\/profiles\/(.+)$/i;
-
   function toLocal(url) {
-    var webxrMatch = String(url).match(WEBXR_PROFILE_PREFIX);
-    if (webxrMatch) {
-      var relativePath = webxrMatch[1].split(/[?#]/)[0];
-      // Do not allow an external URL to escape the vendored asset directory.
-      if (relativePath.indexOf('..') !== -1 || relativePath.charAt(0) === '/') return null;
-      return '/assets/vendor/@webxr-input-profiles/assets/dist/profiles/' + relativePath;
-    }
     for (var i = 0; i < CDN_MAPPINGS.length; i++) {
       var rule = CDN_MAPPINGS[i];
       if (rule.match.test(url)) return rule.local;
@@ -73,13 +84,9 @@
       var originalUrl = (typeof input === 'string' ? input : (input && input.url)) || '';
       var mapped = originalUrl ? toLocal(originalUrl) : null;
       if (cfg.preferLocalFirst && mapped) {
-        return originalFetch(mapped, init).then(function(response) {
-          // fetch does not reject on HTTP errors, so test response.ok too.
-          if (response.ok || !cfg.allowNetworkFallback) return response;
+        // Try local first, on failure try original
+        return originalFetch(mapped, init).catch(function(){
           return originalFetch(input, init);
-        }).catch(function(err){
-          if (cfg.allowNetworkFallback) return originalFetch(input, init);
-          throw err;
         });
       }
       var args = rewriteRequest(input, init);
